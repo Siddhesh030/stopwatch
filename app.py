@@ -7,12 +7,8 @@ app = Flask(__name__)
 
 # Load the pickle model safely
 MODEL_PATH = os.path.join(os.path.dirname(__file__), 'dtmodel.pkl')
-try:
-    with open(MODEL_PATH, 'rb') as f:
-        model = pickle.load(f)
-except Exception as e:
-    print(f"Error loading model file: {e}")
-    model = None
+with open(MODEL_PATH, 'rb') as f:
+    model = pickle.load(f)
 
 # High-end Animated, Dual-Theme UI with Integrated Visualizations
 HTML_TEMPLATE = """
@@ -374,7 +370,7 @@ HTML_TEMPLATE = """
             data: {
                 labels: ['Age', 'Gender', 'Region', 'Occupation', 'Income Scaling'],
                 datasets: [{
-                    data: [28, 1, 2, 4, 45], 
+                    data: [28, 1, 2, 4, 45], // Income scaling display trick for clean visual balance
                     backgroundColor: [
                         '#6366f1',
                         '#a855f7',
@@ -423,7 +419,7 @@ HTML_TEMPLATE = """
             // Dynamically refresh the Pie Chart view mapping data structures 
             window.myChart.data.datasets[0].data = [
                 ageVal, 
-                genderVal * 10, 
+                genderVal * 10, // boost small factors slightly for visual balancing
                 regionVal * 10, 
                 occVal * 10, 
                 incomeVal / 1000
@@ -487,24 +483,13 @@ def predict():
             float(data['Income'])
         ]
         
-        # Log array structure to local terminal for precise dataset testing
-        print(f"--- Processing Input Features Vector: {features} ---")
-        
         # Reshape for single sample execution
         final_features = np.array([features])
+        prediction = model.predict(final_features)
         
-        if model is not None:
-            raw_prediction = model.predict(final_features)
-            # Standardize string formatting from numpy output types
-            prediction_val = str(raw_prediction[0]).strip().lower()
-        else:
-            # Fallback mock setup if pkl is missing or corrupt during testing
-            prediction_val = 'no'
-        
-        return jsonify({'prediction': prediction_val})
-        
+        return jsonify({'prediction': str(prediction[0])})
+    
     except Exception as e:
-        print(f"Prediction Error Trace: {str(e)}")
         return jsonify({'error': str(e)}), 400
 
 if __name__ == '__main__':
